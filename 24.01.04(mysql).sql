@@ -638,9 +638,9 @@ create table child3(
         insert into orders( customer_id, book_id, o_saleprice, o_orderdate) values (2, 10, 7000, str_to_date('2023-07-09', '%Y-%m-%d'));
         insert into orders( customer_id, book_id, o_saleprice, o_orderdate) values (3, 8, 13000, str_to_date('2023-07-10', '%Y-%m-%d'));
         select * from orders;
+         delete from customer where id=5;
         
         -- 조회예제 --
-        
         -- 1 모든 도서의 가격과 도서명 조회.
         select b_bookname, b_price from book;
         -- 2 모든 출판사 이름 조회.
@@ -696,3 +696,18 @@ create table child3(
     select * from orders where o_ordereate >= str_to_date('2023-07-04', '%Y-%m-%d') and o_orderdate <= str_to_date('2023-07-07', '%Y-%m-%d');
 -- 22. 7월 4일 ~ 7일 사이에 주문하지 않은 도서의 주문번호 조회
 	select * from  orders where o_orderdate not between str_to_date('2023-07-04', '%Y-%m-%d') and str_to_date('2023-07-07', '%Y-%m-%d');
+    
+-- 23. 고객, 주문 테이블 조인하여 고객번호 순으로 정렬
+	select * from customer c, orders o where o.customer_id = c.id;
+-- 24. 고객이름(CUSTOMER), 고객이 주문한 도서 가격(ORDERS) 조회 
+    select c.c_name as '고객명', o.o_saleprice as '도서가격' from customer c, orders o where o.customer_id = c.id;
+-- 25. 고객별(GROUP)로 주문한 도서의 총 판매액(SUM)과 고객이름을 조회하고 조회 결과를 가나다 순으로 정렬 
+	select c.c_name as '고객명', sum(o.o_saleprice)as '총 판매액' from customer c, orders o where o.customer_id = c.id group by c_name order by c_name asc; 
+-- 26. 고객명과 고객이 주문한 도서명을 조회(3테이블 조인)
+	select c.c_name as '고객명', b.b_bookname, o.id as '주문번호' from customer c, orders o, book b where o.customer_id = c.id and b.id = o.book_id;
+-- 27. 2만원(SALEPRICE) 이상 도서를 주문한 고객의 이름과 도서명을 조회 
+	select c.c_name as '고객명' , b.b_bookname as '도서명' from customer c, orders o, book b where o.customer_id = c.id and b.id = o.book_id and o.o_saleprice >= 20000;
+-- 28. 손흥민 고객의 총 구매액과 고객명을 함께 조회
+	select c.c_name as '고객명', sum(o.o_saleprice) as '구매액' from customer c, orders o, book b where o.customer_id = c.id and b.id = o.book_id and c.c_name = '손흥민';
+-- 29. 손흥민 고객의 총 구매수량과 고객명을 함께 조회
+	select c.c_name as '고객명', count(*) as '구매수량' from  customer c, orders o, book b where o.customer_id = c.id and b.id = o.book_id and c.c_name = '손흥민';
