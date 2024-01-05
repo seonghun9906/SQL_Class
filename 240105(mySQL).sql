@@ -698,16 +698,74 @@ create table child3(
 	select * from  orders where o_orderdate not between str_to_date('2023-07-04', '%Y-%m-%d') and str_to_date('2023-07-07', '%Y-%m-%d');
     
 -- 23. 고객, 주문 테이블 조인하여 고객번호 순으로 정렬
-	select * from customer c, orders o where o.customer_id = c.id;
+	select * from customer c, orders o where o.customer_id = c.id order by c.id;
 -- 24. 고객이름(CUSTOMER), 고객이 주문한 도서 가격(ORDERS) 조회 
     select c.c_name as '고객명', o.o_saleprice as '도서가격' from customer c, orders o where o.customer_id = c.id;
 -- 25. 고객별(GROUP)로 주문한 도서의 총 판매액(SUM)과 고객이름을 조회하고 조회 결과를 가나다 순으로 정렬 
-	select c.c_name as '고객명', sum(o.o_saleprice)as '총 판매액' from customer c, orders o where o.customer_id = c.id group by c_name order by c_name asc; 
+	select c.c_name as '고객명', sum(o.o_saleprice)as '총 판매액' from customer c, orders o 
+		where o.customer_id = c.id 
+			group by c_name 
+				order by c_name asc; 
 -- 26. 고객명과 고객이 주문한 도서명을 조회(3테이블 조인)
-	select c.c_name as '고객명', b.b_bookname, o.id as '주문번호' from customer c, orders o, book b where o.customer_id = c.id and b.id = o.book_id;
+	select c.c_name as '고객명', b.b_bookname as '도서 명' from customer c, orders o, book b 
+		where o.customer_id = c.id and b.id = o.book_id;
 -- 27. 2만원(SALEPRICE) 이상 도서를 주문한 고객의 이름과 도서명을 조회 
-	select c.c_name as '고객명' , b.b_bookname as '도서명' from customer c, orders o, book b where o.customer_id = c.id and b.id = o.book_id and o.o_saleprice >= 20000;
+	select c.c_name as '고객명' , b.b_bookname as '도서명' from customer c, orders o, book b 
+		where o.customer_id = c.id and b.id = o.book_id and o.o_saleprice >= 20000;
 -- 28. 손흥민 고객의 총 구매액과 고객명을 함께 조회
-	select c.c_name as '고객명', sum(o.o_saleprice) as '구매액' from customer c, orders o, book b where o.customer_id = c.id and b.id = o.book_id and c.c_name = '손흥민';
+	select c.c_name as '고객명', sum(o.o_saleprice) as '구매액' from customer c, orders o, book b 
+		where o.customer_id = c.id and b.id = o.book_id and c.c_name = '손흥민';
 -- 29. 손흥민 고객의 총 구매수량과 고객명을 함께 조회
-	select c.c_name as '고객명', count(*) as '구매수량' from  customer c, orders o, book b where o.customer_id = c.id and b.id = o.book_id and c.c_name = '손흥민';
+	select c.c_name as '고객명', count(*) as '구매수량' from  customer c, orders o, book b 
+		where o.customer_id = c.id and b.id = o.book_id and c.c_name = '손흥민';
+	-- 30. 가장 비싼 도서의 이름을 조회 
+    select b_bookname from book 
+		where b_price = (select max(b_price) from book);		
+-- 31. 책을 구매한 이력이 있는 고객의 이름을 조회
+	select distinct c.c_name from customer c, orders o
+		where o.customer_id = c.id;
+        select c_name from customer where id in(select customer_id from orders);
+-- 32. 도서의 가격(PRICE)과 판매가격(SALEPRICE)의 차이가 가장 많이 나는 주문 조회 
+	select * from orders o, book b
+		where b.id = o.book_id and abs(o.o_saleprice - b.b_price) = (select max(abs(o.o_saleprice - b.b_price)) from orders o, book b where b.id = o.book_id);
+        -- 교수님 풀이
+        select b.b_price-o.o_saleprice from book b, orders o  where b.id = o.book_id;
+        select max(b.b_price-o.o_saleprice) from book b, orders o  where b.id = o.book_id;
+        select * from book b, orders o  where b.id = o.book_id and b.b_price-o.o_saleprice = 6000;
+        select * from book b, orders o  where b.id = o.book_id and b.b_price-o.o_saleprice = (select max(b.b_price-o.o_saleprice) from book b, orders o  where b.id = o.book_id);
+-- 33. 고객별 평균 구매 금액이 도서의 판매 평균 금액 보다 높은 고객의 이름 조회  -- OO별이면 group by
+	select c.c_name from customer c, orders o
+		where o.customer_id = c.id
+			group by c.c_name 
+				having avg(o.o_saleprice) > (select avg(o_saleprice) from orders);
+-- 34. 고객번호가 5인 고객의 주소를 대한민국 인천으로 변경
+	update customer set c_address = '대한민국 인천' where id=5;
+    select * from customer;
+-- 35. 김씨 성을 가진 고객이 주문한 총 판매액 조회
+	select sum(o.o_saleprice) from customer c, orders o 
+		where o.customer_id = c.id  and c.c_name like '김%';
+        -- 교수님 풀이
+        select sum(o_saleprice) from orders where customer_id in(select id from customer where c_name like '김%');
+        
+        -- alter : 테이블의 구조를 변경할 때(컬럼이름 변경, 타입 변경, 컬럼삭제, 제약조건 추가 등)
+        create table student(
+			id bigint,
+            s_name varchar(20),
+            s_mobile int
+        );
+        
+        -- 테이블의 구조 확인
+	desc student;
+    desc book;
+    desc orders;
+    
+    -- 기존컬럼에 제약조건 추가
+    alter table student add constraint primary key(id);
+    -- 기존 컬럼에 타입 변경
+    alter table student modify s_mobile varchar(30);
+    -- 컬럼 추가
+    alter table student add s_major varchar(30);
+    -- 컬럼 이름 변경
+    alter table student change s_mobile s_phone varchar(30);
+    -- 컬럼 삭제
+    alter table student drop s_major;
