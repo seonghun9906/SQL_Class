@@ -919,14 +919,17 @@ select * from board_file_table where board_id = 3;
 update board_table set board_title = 'aaaaa', board_contents = 'aaaaa', board_updated_at = now() where member_id = 1 and category_id = 1 and id = 1;
 select * from board_table where member_id = 1;
 -- 5. 2번 회원이 자유게시판에 첫번째로 작성한 게시글 삭제 
+select * from board_table where member_id = 2;
 delete from board_table where member_id = 2 and id = 4 and category_id = 1;
 -- 7. 페이징 처리(한 페이지당 글 3개씩)
 -- 7.1. 첫번째 페이지
-select * from board_table limit 0, 3;
+select * from board_table order by id desc limit 0, 3; -- 1페이지
 -- 7.2. 두번째 페이지
-select * from board_table limit 3, 3;
+select * from board_table order by id desc limit 3, 3; -- 2페이지
 -- 7.3. 세번째 페이지 
-select * from board_table limit 6, 3;
+select * from board_table order by id desc limit 6, 3; -- 3페이지
+ -- 한페이지당 3개씩 출력하는 경우 전체 글 갯수가 20개라면 필요한 페이지 갯수는? 7장이 필요함.
+ select count(*) from board_table;
 -- 8. 검색(글제목 기준)
 select * from board_table where board_title like 'a%';
 -- 8.1 검색결과를 오래된 순으로 조회 
@@ -936,3 +939,27 @@ select * from board_table where board_title like 'a%'  order by board_hits asc;
 -- 8.3 검색결과 페이징 처리 
 select * from board_table where board_title like 'a%' order by board_hits asc limit 0,3;
 select * from board_table where board_title like 'a%' order by board_hits asc limit 3,3;
+
+-- 댓글 기능 
+-- 1. 댓글 작성 
+-- 1.1. 1번 회원이 1번 게시글에 댓글 작성 
+insert into comment_table (comment_writer, comment_contents, board_id, member_id) values ( '댓글작성자 1', '댓글 내용 1', 1, 1);
+-- 1.2. 2번 회원이 1번 게시글에 댓글 작성 
+insert into comment_table (comment_writer, comment_contents, board_id, member_id) values ( '댓글작성자 2', '댓글 내용 2', 1, 2);
+-- 2. 댓글 조회
+select * from comment_table where board_id = 1;
+select * from board_table where id = 1;
+select * from board_table b, comment_table c where b.id = c.board_id and b.id =1;
+-- 3. 댓글 좋아요 
+-- 3.1. 1번 회원이 2번 회원이 작성한 댓글에 좋아요 클릭
+-- 좋아요 했는지 체크
+select id from good_table where comment_id=2 and member_id =1; 
+-- 좋아요
+insert into good_table (comment_id , member_id ) values (2, 1); 
+-- 좋아요 취소
+delete from good_table where id = 1; 
+-- 3.2. 3번 회원이 2번 회원이 작성한 댓글에 좋아요 클릭 
+insert into good_table (comment_id , member_id ) values (2, 3);
+-- 4. 댓글 조회시 좋아요 갯수도 함께 조회
+select comment_writer, comment_contents, count(*) from comment_table c, good_table g where c.id = g.comment_id and c.id = 2;
+
